@@ -1,11 +1,11 @@
 use axum::{
-    Json,
+    Extension, Json,
     extract::{Path, State},
     response::IntoResponse,
 };
 
 use crate::{
-    dto::{LoginReq, RegisterRequest},
+    dto::{LoginReq, RegisterRequest, User},
     errors::AppError,
     models::user::UserRepository,
     service::user::UserService,
@@ -40,6 +40,7 @@ pub async fn login(
 }
 
 pub async fn get_user(
+    Extension(user): Extension<User>,
     State(state): State<AppState>,
     Path(user_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -47,5 +48,11 @@ pub async fn get_user(
     let user_service = UserService::new(&user_repo, &state.ek, &state.dk);
 
     let resp = user_service.get_user(user_id).await?;
+    if user.id != resp.id {
+        return Err(AppError::PermissionDenied(
+            "cannot access other user's info".to_string(),
+        ));
+    }
+
     Ok(Json(resp))
 }

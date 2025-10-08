@@ -19,6 +19,9 @@ pub enum AppError {
     #[error("{0}")]
     Unauthorized(String),
 
+    #[error("{0}")]
+    PermissionDenied(String),
+
     #[error("generate token failed: {0}")]
     GenerateTokenError(#[from] jwt_simple::Error),
 
@@ -40,6 +43,7 @@ impl IntoResponse for AppError {
             AppError::PasswordHashError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InvalidArgument(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            AppError::PermissionDenied(_) => StatusCode::FORBIDDEN,
             AppError::GenerateTokenError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::AlreadyExists(_) => StatusCode::CONFLICT,
         };

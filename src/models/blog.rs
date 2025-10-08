@@ -4,7 +4,7 @@ use sqlx::{FromRow, PgPool, types::chrono};
 
 use crate::errors::AppError;
 
-#[derive(Debug, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Blog {
     pub id: i64,
     pub title: String,
@@ -56,24 +56,29 @@ impl<'a> BlogRepository<'a> {
         Ok(user)
     }
 
-    pub async fn update(&self, blog: &UpdateBlog) -> Result<Option<Blog>, AppError> {
+    pub async fn update(
+        &self,
+        author_id: i64,
+        blog: &UpdateBlog,
+    ) -> Result<Option<Blog>, AppError> {
         if blog.id == 0 {
             return Err(AppError::InvalidArgument("blog id is invalid".to_string()));
         }
 
-        let result = sqlx::query_as::<_, User>(
+        let result = sqlx::query_as::<_, Blog>(
             r#"
             UPDATE blogs
             SET 
                 title = COALESCE($2, title),
                 content = COALESCE($3, content),
-            WHERE id = $1
+            WHERE id = $1 AND author_id = $4
             RETURNING id, title, content, author_id, created_at, updated_at
             "#,
         )
         .bind(blog.id)
         .bind(&blog.title)
         .bind(&blog.content)
+        .bind(author_id)
         .fetch_optional(self.pool)
         .await?;
 

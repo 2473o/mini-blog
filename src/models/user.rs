@@ -22,6 +22,13 @@ pub struct CreateUser {
 }
 
 #[derive(Debug)]
+pub struct UpdateUser {
+    pub id: i64,
+    pub username: String,
+    pub display_name: String,
+}
+
+#[derive(Debug)]
 pub struct UserRepository<'a> {
     pool: &'a PgPool,
 }
@@ -58,14 +65,12 @@ impl<'a> UserRepository<'a> {
             UPDATE users
             SET 
                 display_name = COALESCE($2, display_name),
-                password_hash = COALESCE($3, password_hash),
             WHERE id = $1
             RETURNING id, username, display_name
             "#,
         )
         .bind(user.id)
         .bind(&user.display_name)
-        .bind(&user.password_hash)
         .fetch_optional(self.pool)
         .await?;
 

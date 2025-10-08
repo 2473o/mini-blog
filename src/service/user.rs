@@ -166,3 +166,19 @@ fn verify_password(password: &str, hash: &str) -> Result<bool, AppError> {
         .verify_password(password.as_bytes(), &parsed_hash)
         .is_ok())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+    #[test]
+    fn test_gen_password() -> Result<()> {
+        let password = "Abcd@1234#";
+        let hash = hash_password(password)?;
+        println!("hash: {}", hash);
+        println!("pwd length: {}", hash.len());
+        let verified = verify_password(password, &hash)?;
+        assert!(verified);
+        Ok(())
+    }
+}

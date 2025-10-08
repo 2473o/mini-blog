@@ -13,32 +13,42 @@ impl<'a> BlogService<'a> {
         Self { blog_store }
     }
 
-    pub async fn create_blog(&self, req: &CreateBlogReq) -> Result<BlogResp, AppError> {
+    pub async fn create_blog(
+        &self,
+        author_id: i64,
+        req: &CreateBlogReq,
+    ) -> Result<BlogResp, AppError> {
         let blog = self
             .blog_store
             .create(&CreateBlog {
                 title: req.title.clone(),
                 content: req.content.clone(),
-                author_id: req.author_id,
+                author_id,
             })
             .await?;
 
         Ok(BlogResp { blog })
     }
 
-    pub async fn update_blog(&self, req: &UpdateBlogReq) -> Result<BlogResp, AppError> {
+    pub async fn update_blog(
+        &self,
+        author_id: i64,
+        req: &UpdateBlogReq,
+    ) -> Result<BlogResp, AppError> {
         if req.id == 0 {
             return Err(AppError::InvalidArgument("blog id is invalid".to_string()));
         }
 
         let blog_opt = self
             .blog_store
-            .update(&UpdateBlog {
-                id: req.id,
-                author_id: req.author_id,
-                title: req.title.clone(),
-                content: req.content.clone(),
-            })
+            .update(
+                author_id,
+                &UpdateBlog {
+                    id: req.id,
+                    title: req.title.clone(),
+                    content: req.content.clone(),
+                },
+            )
             .await?;
 
         match blog_opt {
@@ -47,9 +57,21 @@ impl<'a> BlogService<'a> {
         }
     }
 
-    pub async fn delete_blog(&self, blog_id: i64) -> Result<(), AppError> {
+    pub async fn delete_blog(&self, user_id: i64, blog_id: i64) -> Result<(), AppError> {
         if blog_id == 0 {
             return Err(AppError::InvalidArgument("blog id is invalid".to_string()));
+        }
+
+        let blog = self
+            .blog_store
+            .get_by_id(blog_id)
+            .await?
+            .ok_or_else(|| AppError::NotFound("blog not found".to_string()))?;
+
+        if blog.author_id != user_id {
+            return Err(AppError::PermissionDenied(
+                "cannot delete other user's blog".to_string(),
+            ));
         }
 
         self.blog_store.delete_by_id(blog_id).await

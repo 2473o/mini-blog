@@ -1,6 +1,18 @@
 use jwt_simple::{claims::Claims, prelude::*};
 
 use crate::dto::User;
+use crate::state::TokenVeirfy;
+
+use axum::{
+    extract::{FromRequestParts, Request, State},
+    http::StatusCode,
+    middleware::Next,
+    response::{IntoResponse, Response},
+};
+use axum_extra::{
+    TypedHeader,
+    headers::{Authorization, authorization::Bearer},
+};
 
 const JWT_DURATION: u64 = 64 * 64 * 24 * 7;
 const JWT_ISS: &str = "mini-blog";
@@ -43,6 +55,35 @@ impl DecodingKey {
     }
 }
 
+pub async fn verify_token<T>(State(state): State<T>, req: Request, next: Next) -> Response
+where
+    T: TokenVeirfy + Clone + Send + Sync + 'static,
+{
+    let (mut parts, body) = req.into_parts();
+    let token =
+        match TypedHeader::<Authorization<Bearer>>::from_request_parts(&mut parts, &state).await {
+            Ok(TypedHeader(Authorization(bearer))) => bearer.token().to_string(),
+            Err(e) => {
+                let msg = format!("parse authorization error: {}", e);
+                return (StatusCode::UNAUTHORIZED, msg).into_response();
+            }
+        };
+
+    let req = match state.vetify(&token) {
+        Ok(user) => {
+            let mut req = Request::from_parts(parts, body);
+            req.extensions_mut().insert(user);
+            req
+        }
+        Err(e) => {
+            let msg = format!("verify token failed: {:?}", e);
+            return (StatusCode::FORBIDDEN, msg).into_response();
+        }
+    };
+
+    next.run(req).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -50,10 +91,8 @@ mod tests {
 
     #[test]
     fn test_generate_keys() -> Result<()> {
-        let encoding_pem = include_str!("../../private_key.pem");
-        let decoding_pem = include_str!("../../public_key.pem");
-        let ek = EncodingKey::load(encoding_pem)?;
-        let dk = DecodingKey::load(decoding_pem)?;
+        let ek = EncodingKey::load("")?;
+        let dk = DecodingKey::load("")?;
 
         let user = User {
             id: 1,

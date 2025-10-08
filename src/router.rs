@@ -1,21 +1,16 @@
 use axum::{
     Router, http,
+    middleware::from_fn_with_state,
     response::IntoResponse,
     routing::{any, delete, get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
+    auth::verify_token,
     errors::AppError,
-    handlers::{
-        channel_handler::{
-            create_channel, get_channel, join_channel, leave_channel, list_channel_memebers,
-            list_channels, list_user_channels,
-        },
-        message_handler::{get_message, list_messages, send_message_to_channel, update_message},
-        user_handler::{get_user, login, register},
-        websocket::message_loop,
-    },
+    handler::blog::{create_blog, delete_blog, get_blog, update_blog},
+    handler::user::{get_user, login, register},
     state::AppState,
 };
 
@@ -41,12 +36,16 @@ pub async fn get_router(state: AppState) -> Result<Router, AppError> {
         .max_age(std::time::Duration::from_secs(3600));
 
     let api_router = Router::new()
+        .route("/api/v1/users/{user_id}", get(get_user))
+        .route("/api/v1/blogs", post(create_blog))
+        .route(
+            "/api/v1/blogs/{blog_id}",
+            get(get_blog).put(update_blog).delete(delete_blog),
+        )
+        .layer(from_fn_with_state(state.clone(), verify_token::<AppState>))
         .route("/index", get(index))
         .route("/api/v1/users/register", post(register))
         .route("/api/v1/users/login", post(login))
-        .route("/api/v1/users/{user_id}", get(get_user))
-        .route("/api/v1/blogs", post(join_channel))
-        .route("/api/v1/blogs/{blog_id}", get(leave_channel))
         .layer(cors)
         .with_state(state);
 

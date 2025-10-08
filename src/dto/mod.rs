@@ -49,7 +49,6 @@ pub struct LoginResp {
 pub struct CreateBlogReq {
     pub title: String,
     pub content: String,
-    pub author_id: i64,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -57,10 +56,9 @@ pub struct UpdateBlogReq {
     pub id: i64,
     pub title: String,
     pub content: String,
-    pub author_id: i64,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BlogResp {
     pub blog: BlogDao,
 }

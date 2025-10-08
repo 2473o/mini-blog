@@ -1,14 +1,20 @@
-use axum::{extract::Path, http::StatusCode, response::IntoResponse};
+use axum::{
+    Extension, Json,
+    extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+};
 
 use crate::{
-    dto::{CreateBlogReq, LoginReq, RegisterRequest, UpdateBlogReq},
+    dto::{CreateBlogReq, UpdateBlogReq, User},
     errors::AppError,
-    models::{blog::BlogRepository, user::UserRepository},
-    service::{blog::BlogService, user::UserService},
+    models::blog::BlogRepository,
+    service::blog::BlogService,
     state::AppState,
 };
 
 pub async fn create_blog(
+    Extension(user): Extension<User>,
     State(state): State<AppState>,
     Json(payload): Json<CreateBlogReq>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -17,12 +23,13 @@ pub async fn create_blog(
     let blog_repo = BlogRepository::new(&state.pool);
     let b_service = BlogService::new(&blog_repo);
 
-    let resp = b_service.create_blog(&payload).await?;
-    println!("created blog: {:?}", resp.user);
+    let resp = b_service.create_blog(user.id, &payload).await?;
+    println!("created blog: {:?}", resp.blog);
     Ok(Json(resp))
 }
 
 pub async fn update_blog(
+    Extension(user): Extension<User>,
     State(state): State<AppState>,
     Json(payload): Json<UpdateBlogReq>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -31,11 +38,12 @@ pub async fn update_blog(
     let blog_repo = BlogRepository::new(&state.pool);
     let b_service = BlogService::new(&blog_repo);
 
-    let resp = b_service.update_blog(&payload).await?;
+    let resp = b_service.update_blog(user.id, &payload).await?;
     Ok(Json(resp))
 }
 
 pub async fn delete_blog(
+    Extension(user): Extension<User>,
     State(state): State<AppState>,
     Path(blog_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -44,11 +52,12 @@ pub async fn delete_blog(
     let blog_repo = BlogRepository::new(&state.pool);
     let b_service = BlogService::new(&blog_repo);
 
-    let resp = b_service.delete_blog(blog_id).await?;
+    let _ = b_service.delete_blog(user.id, blog_id).await?;
     Ok((StatusCode::OK).into_response())
 }
 
 pub async fn get_blog(
+    Extension(user): Extension<User>,
     State(state): State<AppState>,
     Path(blog_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -58,6 +67,12 @@ pub async fn get_blog(
     let b_service = BlogService::new(&blog_repo);
 
     let resp = b_service.get_blog(blog_id).await?;
+    if user.id != resp.blog.author_id {
+        return Err(AppError::PermissionDenied(
+            "cannot access other user's blog".to_string(),
+        ));
+    }
+
     Ok(Json(resp))
 }
 
