@@ -1,25 +1,24 @@
 -- Add migration script here
 CREATE TABLE IF NOT EXISTS users (
     id bigserial PRIMARY KEY,
-    user_name VARCHAR(64) NOT NULL UNIQUE,
+    username VARCHAR(64) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL UNIQUE,
     display_name VARCHAR(255) NOT NULL UNIQUE,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS todos (
+CREATE TABLE IF NOT EXISTS blogs (
     id bigserial PRIMARY KEY,
-    user_id bigint NOT NULL REFERENCES users(id),
-    title text NOT NULL,
-    description text NOT NULL DEFAULT '',
-    status SMALLINT NOT NULL DEFAULT 0,
+    title VARCHAR(200) NOT NULL,
+    content text NOT NULL DEFAULT '',
+    author_id bigint NOT NULL REFERENCES users(id),
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_user_created_at ON todos (user_id, created_at);
+CREATE INDEX idx_user_created_at ON blogs (author_id, created_at);
 
-CREATE INDEX idx_user_updated_at ON todos (user_id, updated_at);
+CREATE INDEX idx_user_updated_at ON blogs (author_id, updated_at);
 
-CREATE INDEX idx_user_title ON todos (user_id, title);
+CREATE INDEX idx_user_title ON blogs (author_id, title);

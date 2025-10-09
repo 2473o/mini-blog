@@ -24,7 +24,6 @@ pub struct CreateBlog {
 #[derive(Debug)]
 pub struct UpdateBlog {
     pub id: i64,
-    pub author_id: i64,
     pub title: String,
     pub content: String,
 }

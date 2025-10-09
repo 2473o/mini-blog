@@ -1,1 +1,10 @@
 /target
+
+
+/keys
+
+miniblog.conf
+
+.DS_Store
+
+src/.DS_Store

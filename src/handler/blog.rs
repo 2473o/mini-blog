@@ -6,12 +6,16 @@ use axum::{
 };
 
 use crate::{
-    dto::{CreateBlogReq, UpdateBlogReq, User},
+    dto::{CreateBlogReq, ListBlogResp, SimpleBlog, UpdateBlogReq, User},
     errors::AppError,
     models::blog::BlogRepository,
     service::blog::BlogService,
     state::AppState,
 };
+
+pub async fn index(State(_): State<AppState>) -> Result<impl IntoResponse, AppError> {
+    Ok("Hello, World!")
+}
 
 pub async fn create_blog(
     Extension(user): Extension<User>,
@@ -76,10 +80,11 @@ pub async fn get_blog(
     Ok(Json(resp))
 }
 
-pub async fn list_blogs(State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
+pub async fn list_blogs(Extension(user): Extension<User>, State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
     let blog_repo = BlogRepository::new(&state.pool);
     let b_service = BlogService::new(&blog_repo);
 
-    let resp = b_service.list_blogs(0).await?;
-    Ok(Json(resp))
+    let resp = b_service.list_blogs(user.id).await?;
+    let simple_blogs = resp.into_iter().map(|b| SimpleBlog::from(b.blog)).collect::<Vec<_>>();
+    Ok(Json(ListBlogResp { blogs: simple_blogs }))
 }

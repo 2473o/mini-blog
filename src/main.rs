@@ -23,7 +23,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = PgPool::connect(&database_url).await?;
     info!("connected database: {:?}", pool);
 
-    let state = AppState::new(pool, "", "")?;
+    let state = AppState::new(pool, include_str!("../keys/private.pem"), include_str!("../keys/public.pem"))?;
     let router = get_router(state).await?;
 
     let addr = format!("0.0.0.0:{}", "6869");

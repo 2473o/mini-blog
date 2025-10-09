@@ -2,15 +2,17 @@ use axum::{
     Router, http,
     middleware::from_fn_with_state,
     response::IntoResponse,
-    routing::{any, delete, get, post, put},
+    routing::{get, post},
 };
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     auth::verify_token,
     errors::AppError,
-    handler::blog::{create_blog, delete_blog, get_blog, update_blog},
-    handler::user::{get_user, login, register},
+    handler::{
+        blog::{create_blog, delete_blog, get_blog, list_blogs, update_blog},
+        user::{get_user, login, register},
+    },
     state::AppState,
 };
 
@@ -37,7 +39,7 @@ pub async fn get_router(state: AppState) -> Result<Router, AppError> {
 
     let api_router = Router::new()
         .route("/api/v1/users/{user_id}", get(get_user))
-        .route("/api/v1/blogs", post(create_blog))
+        .route("/api/v1/blogs", post(create_blog).get(list_blogs))
         .route(
             "/api/v1/blogs/{blog_id}",
             get(get_blog).put(update_blog).delete(delete_blog),

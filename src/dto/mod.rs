@@ -63,6 +63,20 @@ pub struct BlogResp {
     pub blog: BlogDao,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct ListBlogResp {
+    pub blogs: Vec<SimpleBlog>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SimpleBlog {
+    pub id: i64,
+    pub title: String,
+    pub author_id: i64,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
+}
+
 impl From<UserDao> for User {
     fn from(user: UserDao) -> Self {
         Self {
@@ -71,6 +85,19 @@ impl From<UserDao> for User {
             display_name: user.display_name,
             created_at: user.created_at,
             updated_at: user.updated_at,
+        }
+    }
+}
+
+
+impl From<BlogDao> for SimpleBlog {
+    fn from(blog: BlogDao) -> Self {
+        Self {
+            id: blog.id,
+            title: blog.title,
+            author_id: blog.author_id,
+            created_at: blog.created_at,
+            updated_at: blog.updated_at,
         }
     }
 }

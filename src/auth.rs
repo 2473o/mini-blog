@@ -19,14 +19,14 @@ const JWT_ISS: &str = "mini-blog";
 const JWT_AUD: &str = "blog-users";
 
 #[derive(Clone)]
-pub struct EncodingKey(Ed25519KeyPair);
+pub struct EncodingKey(RS256KeyPair);
 
 #[derive(Debug, Clone)]
-pub struct DecodingKey(Ed25519PublicKey);
+pub struct DecodingKey(RS256PublicKey);
 
 impl EncodingKey {
     pub fn load(pem: &str) -> Result<Self, jwt_simple::Error> {
-        Ok(Self(Ed25519KeyPair::from_pem(pem)?))
+        Ok(Self(RS256KeyPair::from_pem(pem)?))
     }
 
     pub fn sign(&self, user: User) -> Result<String, jwt_simple::Error> {
@@ -40,7 +40,7 @@ impl EncodingKey {
 
 impl DecodingKey {
     pub fn load(pem: &str) -> Result<Self, jwt_simple::Error> {
-        Ok(Self(Ed25519PublicKey::from_pem(pem)?))
+        Ok(Self(RS256PublicKey::from_pem(pem)?))
     }
 
     pub fn verify(&self, token: &str) -> Result<User, jwt_simple::Error> {
@@ -91,8 +91,8 @@ mod tests {
 
     #[test]
     fn test_generate_keys() -> Result<()> {
-        let ek = EncodingKey::load("")?;
-        let dk = DecodingKey::load("")?;
+        let ek = EncodingKey::load(include_str!("../keys/private.pem"))?;
+        let dk = DecodingKey::load(include_str!("../keys/public.pem"))?;
 
         let user = User {
             id: 1,
