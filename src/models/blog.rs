@@ -67,16 +67,14 @@ impl<'a> BlogRepository<'a> {
         let result = sqlx::query_as::<_, Blog>(
             r#"
             UPDATE blogs
-            SET 
-                title = COALESCE($2, title),
-                content = COALESCE($3, content),
-            WHERE id = $1 AND author_id = $4
+            SET title = $1, content = $2, updated_at = NOW()
+            WHERE id = $3 AND author_id = $4
             RETURNING id, title, content, author_id, created_at, updated_at
             "#,
         )
-        .bind(blog.id)
         .bind(&blog.title)
         .bind(&blog.content)
+        .bind(blog.id)
         .bind(author_id)
         .fetch_optional(self.pool)
         .await?;
