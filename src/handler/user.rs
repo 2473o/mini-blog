@@ -19,7 +19,7 @@ pub async fn register(
     println!("register user: {:?}", payload);
 
     let user_repo = UserRepository::new(&state.pool);
-    let user_service = UserService::new(&user_repo, &state.ek, &state.dk);
+    let user_service = UserService::new(&user_repo, &state.ek);
 
     let resp = user_service.create_user(&payload).await?;
     println!("created user: {:?}", resp.user);
@@ -33,7 +33,7 @@ pub async fn login(
     println!("login user: {:?}", req);
 
     let user_repo = UserRepository::new(&state.pool);
-    let user_service = UserService::new(&user_repo, &state.ek, &state.dk);
+    let user_service = UserService::new(&user_repo, &state.ek);
 
     let resp = user_service.login(&req).await?;
     Ok(Json(resp))
@@ -45,7 +45,7 @@ pub async fn get_user(
     Path(user_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     let user_repo = UserRepository::new(&state.pool);
-    let user_service = UserService::new(&user_repo, &state.ek, &state.dk);
+    let user_service = UserService::new(&user_repo, &state.ek);
 
     let resp = user_service.get_user(user_id).await?;
     if user.id != resp.id {

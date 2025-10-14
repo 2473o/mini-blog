@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
+use tracing::info;
 
 use crate::{
     dto::{CreateBlogReq, ListBlogResp, SimpleBlog, UpdateBlogReq, User},
@@ -80,11 +81,21 @@ pub async fn get_blog(
     Ok(Json(resp))
 }
 
-pub async fn list_blogs(Extension(user): Extension<User>, State(state): State<AppState>) -> Result<impl IntoResponse, AppError> {
+pub async fn list_blogs(
+    Extension(user): Extension<User>,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    info!("user: {} is listing blogs......", user.id);
+
     let blog_repo = BlogRepository::new(&state.pool);
     let b_service = BlogService::new(&blog_repo);
 
     let resp = b_service.list_blogs(user.id).await?;
-    let simple_blogs = resp.into_iter().map(|b| SimpleBlog::from(b.blog)).collect::<Vec<_>>();
-    Ok(Json(ListBlogResp { blogs: simple_blogs }))
+    let simple_blogs = resp
+        .into_iter()
+        .map(|b| SimpleBlog::from(b.blog))
+        .collect::<Vec<_>>();
+    Ok(Json(ListBlogResp {
+        blogs: simple_blogs,
+    }))
 }

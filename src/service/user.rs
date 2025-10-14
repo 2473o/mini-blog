@@ -19,12 +19,11 @@ const MAX_PWD_LEN: usize = 20;
 pub struct UserService<'a> {
     user_store: &'a UserRepository<'a>,
     ek: &'a EncodingKey,
-    dk: &'a DecodingKey,
 }
 
 impl<'a> UserService<'a> {
-    pub fn new(user_store: &'a UserRepository, ek: &'a EncodingKey, dk: &'a DecodingKey) -> Self {
-        Self { user_store, ek, dk }
+    pub fn new(user_store: &'a UserRepository, ek: &'a EncodingKey) -> Self {
+        Self { user_store, ek }
     }
 
     pub async fn create_user(&self, req: &RegisterRequest) -> Result<RegisterResponse, AppError> {
